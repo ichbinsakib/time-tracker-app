@@ -1,4 +1,4 @@
-import type { TimeEntry } from '../lib/types';
+import { formatBDT, type TimeEntry } from '../lib/types';
 
 export default function EntryTable({
   entries,
@@ -37,9 +37,9 @@ export default function EntryTable({
               <td>{entry.entry_date}</td>
               <td>{entry.hours_worked}</td>
               <td className="details-cell">{entry.details}</td>
-              <td>${Number(entry.hourly_rate).toFixed(2)}</td>
-              <td>${Number(entry.payable_amount).toFixed(2)}</td>
-              <td>{entry.previous_due ? `$${Number(entry.previous_due).toFixed(2)}` : ''}</td>
+              <td>{formatBDT(Number(entry.hourly_rate))}</td>
+              <td>{formatBDT(Number(entry.payable_amount))}</td>
+              <td>{entry.previous_due ? formatBDT(Number(entry.previous_due)) : ''}</td>
               <td>
                 <button
                   className={`status-pill ${entry.paid_status.toLowerCase()}`}

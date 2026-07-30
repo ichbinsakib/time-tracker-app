@@ -1,8 +1,4 @@
-import type { TimeEntry } from '../lib/types';
-
-function money(n: number) {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+import { formatBDT, type TimeEntry } from '../lib/types';
 
 export default function SummaryCards({ entries }: { entries: TimeEntry[] }) {
   const totalHours = entries.reduce((s, e) => s + Number(e.hours_worked || 0), 0);
@@ -15,9 +11,9 @@ export default function SummaryCards({ entries }: { entries: TimeEntry[] }) {
 
   const cards = [
     { label: 'Total hours', value: totalHours.toFixed(2) },
-    { label: 'Total payable', value: `$${money(totalPayable)}` },
-    { label: 'Paid', value: `$${money(totalPaid)}`, sub: `${paid.length} entries` },
-    { label: 'Unpaid (due)', value: `$${money(totalUnpaid + totalPrevDue)}`, sub: `${unpaid.length} entries`, warn: totalUnpaid + totalPrevDue > 0 },
+    { label: 'Total payable', value: formatBDT(totalPayable) },
+    { label: 'Paid', value: formatBDT(totalPaid), sub: `${paid.length} entries` },
+    { label: 'Unpaid (due)', value: formatBDT(totalUnpaid + totalPrevDue), sub: `${unpaid.length} entries`, warn: totalUnpaid + totalPrevDue > 0 },
   ];
 
   return (

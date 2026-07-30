@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PaidStatus, TimeEntry } from '../lib/types';
+import { formatBDT, type PaidStatus, type TimeEntry } from '../lib/types';
 
 export interface EntryFormValues {
   entry_date: string;
@@ -143,7 +143,7 @@ export default function EntryForm({
       </div>
       <div className="form-footer">
         <span className="payable-preview">
-          Payable: <strong>${payablePreview.toFixed(2)}</strong>
+          Payable: <strong>{formatBDT(payablePreview)}</strong>
         </span>
         <div className="form-actions">
           {editing && (

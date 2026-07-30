@@ -26,3 +26,7 @@ export type TimeEntryInput = Omit<
   TimeEntry,
   'id' | 'payable_amount' | 'created_at'
 >;
+
+export function formatBDT(n: number) {
+  return `৳${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
