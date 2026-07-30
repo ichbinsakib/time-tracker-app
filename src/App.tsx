@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import type { PaidStatus, TimeEntry, Worker } from './lib/types';
 import Login from './components/Login';
+import SetPassword from './components/SetPassword';
 import SummaryCards from './components/SummaryCards';
 import EntryForm, { type EntryFormValues } from './components/EntryForm';
 import EntryTable from './components/EntryTable';
@@ -13,6 +14,9 @@ type StatusFilter = 'ALL' | PaidStatus;
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(
+    () => /type=invite|type=recovery/.test(window.location.hash)
+  );
 
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [activeWorkerId, setActiveWorkerId] = useState<string | null>(null);
@@ -147,6 +151,18 @@ function App() {
   }
 
   if (authLoading) return <div className="loading-screen">Loading…</div>;
+
+  if (needsPasswordSetup && session) {
+    return (
+      <SetPassword
+        onDone={() => {
+          window.history.replaceState(null, '', window.location.pathname);
+          setNeedsPasswordSetup(false);
+        }}
+      />
+    );
+  }
+
   if (!session) return <Login />;
 
   return (
