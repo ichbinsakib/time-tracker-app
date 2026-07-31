@@ -27,6 +27,12 @@ export type TimeEntryInput = Omit<
   'id' | 'payable_amount' | 'created_at'
 >;
 
+export interface Profile {
+  user_id: string;
+  role: 'admin' | 'worker';
+  worker_id: string | null;
+}
+
 export function formatBDT(n: number) {
   return `৳${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

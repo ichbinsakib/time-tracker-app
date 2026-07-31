@@ -29,18 +29,48 @@ insert into workers (name, default_hourly_rate)
 values ('EMON', 80), ('TUHIN', 95)
 on conflict (name) do nothing;
 
--- Row Level Security: this app is deployed publicly (GitHub Pages), so only
--- signed-in users (via Supabase Auth) may read or write. Create your login
--- user under Authentication -> Users in the Supabase dashboard.
+-- profiles links a Supabase Auth user to either the admin role (full access)
+-- or a specific worker (self-service: log own hours, view own history only).
+create table if not exists profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role text not null check (role in ('admin', 'worker')),
+  worker_id uuid references workers(id) on delete set null
+);
+
 alter table workers enable row level security;
 alter table time_entries enable row level security;
+alter table profiles enable row level security;
 
-create policy "Authenticated read workers" on workers
-  for select using (auth.role() = 'authenticated');
-create policy "Authenticated write workers" on workers
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Users read own profile" on profiles
+  for select using (auth.uid() = user_id);
 
-create policy "Authenticated read time_entries" on time_entries
-  for select using (auth.role() = 'authenticated');
-create policy "Authenticated write time_entries" on time_entries
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Admins full access workers" on workers
+  for all
+  using (exists (select 1 from profiles p where p.user_id = auth.uid() and p.role = 'admin'))
+  with check (exists (select 1 from profiles p where p.user_id = auth.uid() and p.role = 'admin'));
+create policy "Workers read own worker row" on workers
+  for select using (exists (
+    select 1 from profiles p where p.user_id = auth.uid() and p.worker_id = workers.id
+  ));
+
+create policy "Admins full access time_entries" on time_entries
+  for all
+  using (exists (select 1 from profiles p where p.user_id = auth.uid() and p.role = 'admin'))
+  with check (exists (select 1 from profiles p where p.user_id = auth.uid() and p.role = 'admin'));
+create policy "Workers select own entries" on time_entries
+  for select using (exists (
+    select 1 from profiles p where p.user_id = auth.uid() and p.worker_id = time_entries.worker_id
+  ));
+create policy "Workers insert own entries" on time_entries
+  for insert with check (
+    exists (select 1 from profiles p where p.user_id = auth.uid() and p.worker_id = time_entries.worker_id)
+    and paid_status = 'UNPAID'
+    and previous_due = 0
+  );
+
+-- After creating your own login under Authentication -> Users, link it as
+-- admin (replace the UID with yours from the Users table):
+--   insert into profiles (user_id, role) values ('<your-user-uid>', 'admin');
+-- After inviting a worker (e.g. TUHIN) and they appear in Users, link them:
+--   insert into profiles (user_id, role, worker_id)
+--   values ('<their-user-uid>', 'worker', (select id from workers where name = 'TUHIN'));

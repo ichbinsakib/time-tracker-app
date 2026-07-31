@@ -17,9 +17,15 @@ tracked hours for EMON and TUHIN.
    `../time-tracker-private-data/seed.sql` on the machine this was built on, or regenerate
    it with `node scripts/gen-seed.mjs` from the CSVs in `../time-tracker-private-data/source-data/`)
    and click **Run**. This loads all ~1,428 historical rows from the original Google Sheet.
-6. Go to **Authentication → Users → Add user** and create yourself a login
-   (email + password). This is the only account that will be able to sign in to the app.
-7. Go to **Project Settings → API**. Copy the **Project URL** and the **anon public** key —
+6. Go to **Authentication → Users → Add user → Send invitation** and invite yourself
+   (as admin) and each worker who should log their own hours (e.g. Tuhin). Each person
+   sets their own password via the emailed link.
+7. Link each invited user to a role by running one insert per person in the SQL editor
+   (see the commented examples at the bottom of `schema.sql`):
+   - You (admin): `insert into profiles (user_id, role) values ('<your-uid>', 'admin');`
+   - A worker: `insert into profiles (user_id, role, worker_id) values ('<their-uid>', 'worker', (select id from workers where name = 'TUHIN'));`
+   User UIDs are visible in **Authentication → Users**.
+8. Go to **Project Settings → API**. Copy the **Project URL** and the **anon public** key —
    you'll need both in step 2 below.
 
 ## 2. Configure and run locally
@@ -60,6 +66,14 @@ push to `main`. Before pushing:
 The anon key is safe to expose publicly — it only grants what your Row Level Security
 policies allow, which here is "must be signed in." Anyone visiting the site still hits
 the Login screen and needs the Supabase user credentials you created.
+
+## Roles
+
+- **Admin**: sees every worker, full add/edit/delete, paid/unpaid toggle, and the dashboard.
+- **Worker**: after signing in, sees only their own name, a simple "log today's hours"
+  form (date, hours, details — rate is fixed from their profile), and a read-only list of
+  their own past entries with the computed payable amount. They can't edit/delete past
+  entries, change paid/unpaid status, or see anyone else's data.
 
 ## Notes on the data
 

@@ -5,11 +5,13 @@ export default function EntryTable({
   onEdit,
   onDelete,
   onTogglePaid,
+  readOnly = false,
 }: {
   entries: TimeEntry[];
-  onEdit: (entry: TimeEntry) => void;
-  onDelete: (entry: TimeEntry) => void;
-  onTogglePaid: (entry: TimeEntry) => void;
+  onEdit?: (entry: TimeEntry) => void;
+  onDelete?: (entry: TimeEntry) => void;
+  onTogglePaid?: (entry: TimeEntry) => void;
+  readOnly?: boolean;
 }) {
   if (entries.length === 0) {
     return <p className="empty-state">No entries yet. Add one above.</p>;
@@ -28,7 +30,7 @@ export default function EntryTable({
             <th>Prev. due</th>
             <th>Status</th>
             <th>Remarks</th>
-            <th></th>
+            {!readOnly && <th></th>}
           </tr>
         </thead>
         <tbody>
@@ -41,23 +43,31 @@ export default function EntryTable({
               <td>{formatBDT(Number(entry.payable_amount))}</td>
               <td>{entry.previous_due ? formatBDT(Number(entry.previous_due)) : ''}</td>
               <td>
-                <button
-                  className={`status-pill ${entry.paid_status.toLowerCase()}`}
-                  onClick={() => onTogglePaid(entry)}
-                  title="Click to toggle paid/unpaid"
-                >
-                  {entry.paid_status}
-                </button>
+                {readOnly ? (
+                  <span className={`status-pill ${entry.paid_status.toLowerCase()}`}>
+                    {entry.paid_status}
+                  </span>
+                ) : (
+                  <button
+                    className={`status-pill ${entry.paid_status.toLowerCase()}`}
+                    onClick={() => onTogglePaid?.(entry)}
+                    title="Click to toggle paid/unpaid"
+                  >
+                    {entry.paid_status}
+                  </button>
+                )}
               </td>
               <td className="details-cell">{entry.remarks}</td>
-              <td className="row-actions">
-                <button className="link-btn" onClick={() => onEdit(entry)}>
-                  Edit
-                </button>
-                <button className="link-btn danger" onClick={() => onDelete(entry)}>
-                  Delete
-                </button>
-              </td>
+              {!readOnly && (
+                <td className="row-actions">
+                  <button className="link-btn" onClick={() => onEdit?.(entry)}>
+                    Edit
+                  </button>
+                  <button className="link-btn danger" onClick={() => onDelete?.(entry)}>
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
